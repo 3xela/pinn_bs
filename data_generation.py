@@ -2,7 +2,6 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import norm
-from dataclasses import dataclass
 from torch.utils.data import Dataset, DataLoader
 
 def generate_brownian_motion(S_0,T, N, mu, sigma, seed=None):
@@ -54,7 +53,7 @@ plt.plot(t, W)
 plt.title('Simulated Stock price for S_0=' + str(S_0))
 plt.xlabel('Days')
 plt.ylabel('Price')
-plt.show()
+#plt.show()
 
 
 x = torch.tensor([S_0, K, sigma, T, r_f])
@@ -72,16 +71,14 @@ def black_scholes_call_price(a):
     d_2 = d_1 - a[2] * np.sqrt(a[3]/365)
 #black scholes calculation
     c = a[0] * norm.cdf(d_1) - a[1] * np.exp(-a[4] * a[3]/365)*norm.cdf(d_2)
-    return c
-
-print(black_scholes_call_price(x))
+    return c.squeeze()
 
 # general format: x = torch.tensor([S_0, K, sigma, T, r_f])
 
 data_size = 10000
 vector_dim = 5
 
-data = torch.zeros(data_size,vector_dim)
+data = torch.zeros(data_size, vector_dim)
 #fill data with randomly generated values.
 
 #fill in initial stock stock price
@@ -99,18 +96,16 @@ data[:, 3] = torch.rand(data_size)*(150)+30
 #fill in risk free rate data
 data[:, 4] = torch.rand(data_size)*0.1
 
-values = black_scholes_call_price(data)
-values = values.view(-1, 1)
+#values = black_scholes_call_price(data)
+#values = values.view(-1, 1)
 
 class MyDataset(Dataset):
-    def __init__(self, data,targets):
+    def __init__(self, data):
         self.data = data
-        self.targets = targets
     def __len__(self):
         return len(self.data)
-
     def __getitem__(self, index):
         x = self.data[index]
-        y = self.targets[index]
-        print(f"Sample {index}: x shape - {x.shape}, y shape - {y.shape}")
-        return x, y
+        y = black_scholes_call_price(x)
+        y=y.view(-1,1)
+        return torch.tensor(x, dtype=torch.float32), torch.tensor(y, dtype=torch.float32)
