@@ -55,8 +55,6 @@ plt.xlabel('Days')
 plt.ylabel('Price')
 #plt.show()
 
-
-x = torch.tensor([S_0, K, sigma, T, r_f])
 def black_scholes_call_price(a):
     """
     solves the black scholes equation (european call) using the classical formulation
@@ -74,6 +72,8 @@ def black_scholes_call_price(a):
     return c.squeeze()
 
 # general format: x = torch.tensor([S_0, K, sigma, T, r_f])
+
+x = torch.tensor([S_0, K, sigma, T, r_f])
 
 data_size = 10000
 vector_dim = 5
@@ -96,9 +96,6 @@ data[:, 3] = torch.rand(data_size)*(150)+30
 #fill in risk free rate data
 data[:, 4] = torch.rand(data_size)*0.1
 
-#values = black_scholes_call_price(data)
-#values = values.view(-1, 1)
-
 class MyDataset(Dataset):
     def __init__(self, data):
         self.data = data
@@ -108,4 +105,4 @@ class MyDataset(Dataset):
         x = self.data[index]
         y = black_scholes_call_price(x)
         y=y.view(-1,1)
-        return torch.tensor(x, dtype=torch.float32), torch.tensor(y, dtype=torch.float32)
+        return torch.tensor(x, dtype=torch.float32), y
