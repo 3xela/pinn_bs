@@ -5,11 +5,12 @@ class Model(nn.Module):
     def __init__(self):
         super(Model, self).__init__()
         self.tanh = nn.Tanh()
-        self.fc1 = nn.Linear(5,50)
-        self.fc2 = nn.Linear(50,50)
-        self.fc3 = nn.Linear(50,50)
-        self.fc4 = nn.Linear(50,10)
+        self.fc1 = nn.Linear(5,100)
+        self.fc2 = nn.Linear(100,100)
+        self.fc3 = nn.Linear(100,100)
+        self.fc4 = nn.Linear(100,10)
         self.fc5 = nn.Linear(10,1)
+        self.fc6 = nn.Linear(1,1)
 
     def forward(self, x):
         x = self.tanh(self.fc1(x))
@@ -17,6 +18,7 @@ class Model(nn.Module):
         x = self.tanh(self.fc3(x)) + x
         x = self.tanh(self.fc4(x))
         x = self.tanh(self.fc5(x))
+        x = self.fc6(x)
         return x.squeeze()
     def __call__(self, x):
         return self.forward(x)
@@ -46,29 +48,23 @@ class PinnLoss(nn.Module):
         V_ss = (V_s_ds - V_s)/c
 
         pde_error = V_t+0.5*a[:,2]**2*a[:,0]**2*V_ss + a[:,4]*a[:,0]*V_s - a[:,4]*self.model(a)
-
+        print(pde_error.shape)
         return pde_error
     def integrate_squared_norm(self, V, domain):
-        num_samples = 100
-        # 50 = number of points along each dimension
-        sampled_indices = [torch.randint(0, 50, (num_samples,), dtype=torch.long) for _ in range(5)]
 
-        sampled_points = [domain[i][sampled_indices[i]] for i in range(5)]
-
-        sampled_points = torch.stack(sampled_points, dim=1)
-
-        integral = nn.MSELoss()(self.model(sampled_points) , 0)
-
+        batch_size, num_points, _ = domain.size()
+        pinn_loss_values = self.pinn_loss(V, domain)
+        print(pinn_loss_values.shape)
+        integral_norm = torch.sum(pinn_loss_values ** 2)
+        integral = integral_norm / (batch_size * num_points)
         return integral
     def forward(self, predicted, target,domain):
 
         mse_loss = nn.MSELoss()(predicted, target)
 
-        squared_norm_integral = self.integrate_squared_norm(self.model, domain)
+        pinn_loss_integral = self.integrate_squared_norm(self.model, domain)
         boundary_loss = torch.tensor(0.0, dtype=predicted.dtype)
 
-        loss = squared_norm_integral + mse_loss + boundary_loss
+        loss = pinn_loss_integral + mse_loss + boundary_loss
         loss = torch.mean(loss)
         return loss
-
-#model_t + 0.5*sigma**2 * S**2 *model_SS + r*S* V_S - r*model

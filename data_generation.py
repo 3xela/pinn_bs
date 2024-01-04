@@ -65,11 +65,11 @@ def black_scholes_call_price(a):
     - x[4] = r_f: riskfree rate, in year units.
     """
 #internal parameters used to solve the equation
-    d_1 = (np.log(a[0] / a[1]) + (a[3]/365)*(a[4] + 0.5*x[2]**2))/ (a[2] * np.sqrt(a[3]/365) )
-    d_2 = d_1 - a[2] * np.sqrt(a[3]/365)
+    d_1 = (torch.log(a[0] / a[1]) + (a[3]/365)*(a[4] + 0.5*x[2]**2))/ (a[2] * torch.sqrt(a[3]/365) )
+    d_2 = d_1 - a[2] * torch.sqrt(a[3]/365)
 #black scholes calculation
     c = a[0] * norm.cdf(d_1) - a[1] * np.exp(-a[4] * a[3]/365)*norm.cdf(d_2)
-    return c.squeeze()
+    return torch.tensor(c)
 
 # general format: x = torch.tensor([S_0, K, sigma, T, r_f])
 
