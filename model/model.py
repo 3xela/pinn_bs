@@ -1,6 +1,8 @@
 import torch.nn as nn
 import torch
 from torch.autograd.functional import jacobian
+import deepxde as dde
+
 class Model(nn.Module):
     def __init__(self):
         super(Model, self).__init__()
@@ -29,11 +31,10 @@ class PinnLoss(nn.Module):
         self.model = model
 
     def pinn_loss(self, V, a):
-
         jacobian_matrix = jacobian(V, inputs=a, create_graph=True)
-        summed_matrix = torch.sum(jacobian_matrix, dim=1)
-
-        V_s = summed_matrix[:,0]
+        print(f"jacobian shape : {jacobian_matrix.shape}")
+        summed_matrix = torch.sum(jacobian_matrix, dim=0)
+        V_s = jacobian_matrix[:,0]
         V_t = summed_matrix[:,3]
 
         c = 0.01
@@ -47,17 +48,18 @@ class PinnLoss(nn.Module):
 
         V_ss = (V_s_ds - V_s)/c
 
-        pde_error = V_t+0.5*a[:,2]**2*a[:,0]**2*V_ss + a[:,4]*a[:,0]*V_s - a[:,4]*self.model(a)
-        print(pde_error.shape)
+        pde_error = V_t+0.5*a[:,:,2]**2*a[:,:,0]**2*V_ss + a[:,:,4]*a[:,:,0]*V_s - a[:,:,4]*self.model(a)
+
         return pde_error
     def integrate_squared_norm(self, V, domain):
 
         batch_size, num_points, _ = domain.size()
         pinn_loss_values = self.pinn_loss(V, domain)
-        print(pinn_loss_values.shape)
         integral_norm = torch.sum(pinn_loss_values ** 2)
         integral = integral_norm / (batch_size * num_points)
-        return integral
+
+        return 0
+
     def forward(self, predicted, target,domain):
 
         mse_loss = nn.MSELoss()(predicted, target)
