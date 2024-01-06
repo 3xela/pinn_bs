@@ -1,7 +1,6 @@
 import torch.nn as nn
 import torch
 from torch.autograd.functional import jacobian
-from remin import func
 
 class Model(nn.Module):
     def __init__(self):
