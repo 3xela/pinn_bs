@@ -1,6 +1,5 @@
 import torch.nn as nn
 import torch
-from torch.autograd.functional import jacobian
 
 class Model(nn.Module):
     def __init__(self):
@@ -29,48 +28,36 @@ class PinnLoss(nn.Module):
         super(PinnLoss, self).__init__()
         self.model = model
 
-    def pinn_loss(self, V, a):
-        jacobian_matrix = jacobian(V, inputs=a, create_graph=True)
+    def pinn_loss(self, batch_size):
 
-        summed_matrix = torch.sum(jacobian_matrix, dim=0)
-        V_s = jacobian_matrix[:,0]
-        V_t = summed_matrix[:,3]
+        num_points = 10
+        random_points = torch.rand(batch_size*num_points, 5)
+        endpoint_1 = torch.tensor([0.0, 0.0, 0.0, 30.0, 0.0])
+        endpoint_2 = torch.tensor([300.0, 300.0, 0.4, 180.0, 0.1])
+        a = random_points * (endpoint_2 - endpoint_1) + endpoint_1
+        a = a.view(batch_size, num_points, 5)
+        V_predicted = self.model(a)
 
-        c = 0.01
-        b = a.clone()
-        b[:, 0] += c
+        gradient = torch.autograd.grad(V_predicted.sum(), a, create_graph=True, retain_graph=True)[0]
 
-        jacobian_matrix_2 = jacobian(V,inputs = b, create_graph=True)
+        V_predicted_s = gradient[:,0]
+        V_predicted_t = gradient[:,3]
 
-        summed_matrix_2 = torch.sum(jacobian_matrix_2, dim = 1)
-        V_s_ds = summed_matrix_2[:,0]
 
-        V_ss = (V_s_ds - V_s)/c
+        gradient_2 = torch.autograd.grad(V_predicted_s.sum(), a , create_graph=True, retain_graph=True)[0]
 
-        pde_error = V_t+0.5*a[:,:,2]**2*a[:,:,0]**2*V_ss + a[:,:,4]*a[:,:,0]*V_s - a[:,:,4]*self.model(a)
+        V_predicted_ss =gradient_2[:,0]
 
+        pde_error = V_predicted_t+0.5*a[:,2]**2*a[:,0]**2*V_predicted_ss + a[:,4]*a[:,0]*V_predicted - a[:,4]*V_predicted
         return pde_error
 
-
-    def integrate_squared_norm(self, V, points):
-        num_points = 100
-        random_samples = torch.rand(num_points, 5)
-
-
-        pinn_loss_values = self.pinn_loss(V, points)
-        integral_norm = torch.sum(pinn_loss_values ** 2)
-        integral = integral_norm / (100)
-
-        return 0
-
-    def forward(self, predicted, target,domain):
+    def forward(self, predicted, target, batch_size):
 
         mse_loss = nn.MSELoss()(predicted, target)
         pinn_loss_integral = 0
 
-        #pinn_loss_integral = self.integrate_squared_norm(self.model, domain)
         boundary_loss = torch.tensor(0.0, dtype=predicted.dtype)
 
         loss = pinn_loss_integral + mse_loss + boundary_loss
-        loss = torch.mean(loss)
+
         return loss

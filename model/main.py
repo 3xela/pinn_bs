@@ -4,18 +4,8 @@ import torch.optim as optim
 from data_generation import MyDataset, data
 from torch.utils.data import DataLoader
 
-epochs = 1000
-batch_size =10
-
-endpoint_1 = torch.tensor([0.0, 0.0, 0.0, 30.0, 0.0])
-endpoint_2 = torch.tensor([300.0, 300.0, 0.4, 180.0, 0.1])
-num_points = 20
-points_along_dimensions = [torch.linspace(endpoint_1[i], endpoint_2[i], num_points) for i in range(5)]
-domain_one_layer = torch.stack(torch.meshgrid(*points_along_dimensions), dim=-1).view(-1, 5)
-
-domain_batched = domain_one_layer.unsqueeze(0).expand(batch_size, -1, -1)
-domain_batched.requires_grad_(True)
-
+epochs = 2000
+batch_size =5
 
 my_model = Model()
 pinnloss = PinnLoss(my_model)
@@ -29,7 +19,7 @@ for epoch in range(epochs):
     for x_batch, y_batch in dataloader:
         prediction = my_model(x_batch)
 
-        my_loss = pinnloss(prediction, y_batch, domain_batched)
+        my_loss = pinnloss(prediction, y_batch, batch_size)
 
         optimizer.zero_grad()
         my_loss.backward()
