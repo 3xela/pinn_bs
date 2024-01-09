@@ -55,6 +55,10 @@ class PinnLoss(nn.Module):
         pde_error = torch.norm(pde_error, dim = 1)
         return pde_error
 
+    def boundary_loss(self, batch_size):
+
+        return 0
+
     def forward(self, predicted, target, batch_size):
 
         mse_loss = nn.MSELoss()(predicted, target)
