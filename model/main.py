@@ -1,11 +1,10 @@
 from model import Model, PinnLoss
-import torch
 import torch.optim as optim
 from data_generation import MyDataset, data
 from torch.utils.data import DataLoader
 
 epochs = 2000
-batch_size =5
+batch_size =4
 
 my_model = Model()
 pinnloss = PinnLoss(my_model)
