@@ -5,11 +5,11 @@ class Model(nn.Module):
     def __init__(self):
         super(Model, self).__init__()
         self.tanh = nn.Tanh()
-        self.fc1 = nn.Linear(5,100)
-        self.fc2 = nn.Linear(100,100)
-        self.fc3 = nn.Linear(100,100)
-        self.fc4 = nn.Linear(100,100)
-        self.fc5 = nn.Linear(100,10)
+        self.fc1 = nn.Linear(5,256)
+        self.fc2 = nn.Linear(256,256)
+        self.fc3 = nn.Linear(256,256)
+        self.fc4 = nn.Linear(256,256)
+        self.fc5 = nn.Linear(256,10)
         self.fc6 = nn.Linear(10,1)
         self.fc7 = nn.Linear(1,1)
 

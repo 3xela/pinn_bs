@@ -2,7 +2,7 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import norm
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 
 def generate_brownian_motion(S_0,T, N, mu, sigma, seed=None):
     """
@@ -104,5 +104,5 @@ class MyDataset(Dataset):
     def __getitem__(self, index):
         x = self.data[index]
         y = black_scholes_call_price(x)
-        y=y.view(-1,1)
+        y = y.squeeze()
         return torch.tensor(x, dtype=torch.float32), y
