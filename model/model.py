@@ -1,5 +1,6 @@
 import torch.nn as nn
 import torch
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 class Model(nn.Module):
     def __init__(self):
@@ -30,15 +31,10 @@ class PinnLoss(nn.Module):
         super(PinnLoss, self).__init__()
         self.model = model
 
-    def pinn_loss(self, batch_size):
-
-        num_points = 10
-        random_points = torch.rand(batch_size*num_points, 5)
-        endpoint_1 = torch.tensor([0.0, 0.0, 0.0, 30.0, 0.0])
-        endpoint_2 = torch.tensor([300.0, 300.0, 0.4, 180.0, 0.1])
-        a = random_points * (endpoint_2 - endpoint_1) + endpoint_1
-        a = a.view(batch_size, num_points, 5)
-        a.requires_grad_(True)
+    def pinn_loss(self, grid):
+        num_samples_per_batch = 1000
+        indices = torch.randint(0, grid.size(1), (grid.size(0), num_samples_per_batch))
+        a = torch.stack([grid[i, idx] for i, idx in enumerate(indices)], dim=0)
 
         V_predicted = self.model(a)
         gradient = torch.autograd.grad(V_predicted.sum(), a, create_graph=True, retain_graph=True)[0]
@@ -59,10 +55,10 @@ class PinnLoss(nn.Module):
 
         return 0
 
-    def forward(self, predicted, target, batch_size):
+    def forward(self, predicted, target, grid):
 
         mse_loss = nn.MSELoss()(predicted, target)
-        pinn_loss = self.pinn_loss(batch_size)
+        pinn_loss = self.pinn_loss(grid)
         pinn_loss = torch.mean(pinn_loss)
         boundary_loss = torch.tensor(0.0, dtype=predicted.dtype)
 

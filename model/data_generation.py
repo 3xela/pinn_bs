@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 from scipy.stats import norm
 from torch.utils.data import Dataset
 
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
 def generate_brownian_motion(S_0,T, N, mu, sigma, seed=None):
     """
     Generate 1-dimensional Brownian motion.
@@ -58,22 +60,23 @@ plt.ylabel('Price')
 def black_scholes_call_price(a):
     """
     solves the black scholes equation (european call) using the classical formulation
-    - x[0] = S_0: stock price at start date
-    - x[1] = K: Strike price of the call option
-    - x[2] = sigma: Volatility of the stock option, for now assume it is fixed.
-    - x[3] = T: time to maturity in days
-    - x[4] = r_f: riskfree rate, in year units.
+    - a[0] = S_0: stock price at start date
+    - a[1] = K: Strike price of the call option
+    - a[2] = sigma: Volatility of the stock option, for now assume it is fixed.
+    - a[3] = T: time to maturity in days
+    - a[4] = r_f: riskfree rate, in year units.
     """
 #internal parameters used to solve the equation
-    d_1 = (torch.log(a[0] / a[1]) + (a[3]/365)*(a[4] + 0.5*x[2]**2))/ (a[2] * torch.sqrt(a[3]/365) )
-    d_2 = d_1 - a[2] * torch.sqrt(a[3]/365)
-#black scholes calculation
-    c = a[0] * norm.cdf(d_1) - a[1] * np.exp(-a[4] * a[3]/365)*norm.cdf(d_2)
-    return torch.tensor(c)
+    d_1 = (torch.log(a[0] / a[1]) + (a[3] / 365) * (a[4] + 0.5 * a[2] ** 2)) / (a[2] * torch.sqrt(a[3] / 365))
+    d_2 = d_1 - a[2] * torch.sqrt(a[3] / 365)
+
+    # Black-Scholes calculation using PyTorch functions
+    c = a[0] * norm.cdf(d_1) - a[1] * torch.exp(-a[4] * a[3] / 365) * norm.cdf(d_2)
+    return c
 
 # general format: x = torch.tensor([S_0, K, sigma, T, r_f])
 
-x = torch.tensor([S_0, K, sigma, T, r_f])
+#x = torch.tensor([S_0, K, sigma, T, r_f])
 
 data_size = 10000
 vector_dim = 5
@@ -105,4 +108,8 @@ class MyDataset(Dataset):
         x = self.data[index]
         y = black_scholes_call_price(x)
         y = y.squeeze()
+
+        x = x.to(device)
+        y = y.to(device)
+
         return torch.tensor(x, dtype=torch.float32), y
