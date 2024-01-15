@@ -13,7 +13,7 @@ batch_size =10
 
 my_model = Model().to(device)
 pinnloss = PinnLoss(my_model).to(device)
-optimizer = optim.Adam(my_model.parameters(), lr=0.1)
+optimizer = optim.Adam(my_model.parameters(), lr=0.01)
 
 training_data = MyDataset(data)
 dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=False)
@@ -56,6 +56,8 @@ for epoch in range(epochs):
     print(f'Epoch {epoch + 1}/{epochs}, Average Loss: {average_loss}')
     if epoch % 10 == 0:
         torch.save(my_model.state_dict(), model_path)
+
+torch.save(my_model.state_dict(), model_path)
 
 plt.plot(range(1, epochs + 1), loss_plot)
 plt.title('Training Loss Over Epochs')

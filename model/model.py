@@ -10,18 +10,14 @@ class Model(nn.Module):
         self.fc2 = nn.Linear(256,256)
         self.fc3 = nn.Linear(256,256)
         self.fc4 = nn.Linear(256,256)
-        self.fc5 = nn.Linear(256,10)
-        self.fc6 = nn.Linear(10,1)
-        self.fc7 = nn.Linear(1,1)
+        self.fc5 = nn.Linear(256,1)
 
     def forward(self, x):
         x = self.tanh(self.fc1(x))
         x = self.tanh(self.fc2(x)) + x
         x = self.tanh(self.fc3(x)) + x
         x = self.tanh(self.fc4(x)) + x
-        x = self.tanh(self.fc5(x))
-        x = self.tanh(self.fc6(x))
-        x = self.fc7(x)
+        x = self.fc5(x)
         return x.squeeze()
     def __call__(self, x):
         return self.forward(x)
