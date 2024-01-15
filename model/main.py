@@ -8,12 +8,12 @@ import os
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-epochs = 2000
-batch_size =5
+epochs = 1000
+batch_size =10
 
 my_model = Model().to(device)
 pinnloss = PinnLoss(my_model).to(device)
-optimizer = optim.Adam(my_model.parameters(), lr=0.001)
+optimizer = optim.Adam(my_model.parameters(), lr=0.1)
 
 training_data = MyDataset(data)
 dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=False)
